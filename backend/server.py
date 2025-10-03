@@ -232,48 +232,119 @@ def create_admin_token(admin_id: str):
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
-async def generate_tweet_content(company_name: str, twitter_handle: str, description: str = "") -> str:
-    """Generate positive tweet content about a company using LLM"""
+import random
+import re
+from difflib import SequenceMatcher
+
+def calculate_similarity(text1: str, text2: str) -> float:
+    """Calculate similarity between two texts (0.0 to 1.0)"""
+    return SequenceMatcher(None, text1.lower(), text2.lower()).ratio()
+
+async def check_tweet_uniqueness(new_tweet: str, company_id: str, min_similarity: float = 0.7) -> bool:
+    """Check if tweet is sufficiently unique compared to existing tweets"""
+    # Get all existing tweets for this company
+    existing_tweets = await db.tweets.find({"company_id": company_id}).to_list(1000)
+    
+    # Also check against tweets from other companies to ensure global uniqueness
+    all_tweets = await db.tweets.find({}).to_list(5000)  # Check last 5000 tweets
+    
+    for tweet in all_tweets:
+        similarity = calculate_similarity(new_tweet, tweet["content"])
+        if similarity > min_similarity:
+            return False  # Too similar, not unique enough
+    
+    return True
+
+async def generate_human_like_tweet(company_name: str, twitter_handle: str, description: str = "", attempt: int = 1) -> str:
+    """Generate human-like tweet that passes AI detection"""
+    
+    # Different writing styles for variety
+    styles = [
+        "excited_community_member",
+        "casual_investor", 
+        "tech_enthusiast",
+        "long_term_holder",
+        "defi_user"
+    ]
+    
+    # Different prompt approaches for uniqueness
+    style = random.choice(styles)
+    
+    if style == "excited_community_member":
+        system_message = f"""You're an excited crypto community member who genuinely loves {company_name}. Write like a real person on Twitter - use natural language, maybe some slang, and show real enthusiasm. You're not a marketer, just a fan sharing your thoughts.
+
+Write a tweet about {company_name} that feels completely natural and human. Include {twitter_handle} naturally in your message.
+
+Make it sound like something you'd actually say to friends, not a corporate announcement. Use casual language, maybe throw in some crypto slang. Keep it under 280 chars."""
+
+    elif style == "casual_investor":
+        system_message = f"""You're a casual crypto investor sharing your genuine thoughts about {company_name}. Write like you're talking to other investors in a Discord or Twitter space.
+
+Share why you're bullish on {company_name} ({twitter_handle}) but keep it conversational and real. Use the kind of language actual crypto investors use - natural, sometimes imperfect, but authentic.
+
+No corporate speak - just honest investor perspective. Under 280 characters."""
+
+    elif style == "tech_enthusiast":
+        system_message = f"""You're a tech-savvy person who appreciates the technical aspects of {company_name}. Write about what impresses you technically, but in a way that shows you really understand and use the product.
+
+Mention {twitter_handle} naturally while discussing something specific you like about their tech or recent updates. Sound like someone who actually uses crypto products, not someone reading a script.
+
+Keep it authentic and under 280 chars."""
+
+    elif style == "long_term_holder":
+        system_message = f"""You're someone who has been following {company_name} for a while and believes in the long-term vision. Share your perspective as someone who has seen the project evolve.
+
+Include {twitter_handle} while talking about what keeps you excited about the project long-term. Write like you're sharing with other long-term believers.
+
+Make it personal and genuine, under 280 characters."""
+
+    else:  # defi_user
+        system_message = f"""You're an active DeFi user who has had good experiences with {company_name}'s products. Write about your actual user experience in a natural way.
+
+Mention {twitter_handle} while sharing something specific about using their platform or tools. Sound like someone who actually interacts with DeFi protocols regularly.
+
+Keep it real and conversational, under 280 characters."""
+
+    # Add randomness and human imperfections
+    human_touches = [
+        "Maybe add a small typo or informal contraction",
+        "Use casual punctuation - maybe skip some periods or use multiple exclamation marks", 
+        "Include some crypto Twitter slang naturally",
+        "Maybe start with 'ngl' or 'tbh' or similar casual phrase",
+        "Could use 'fr' (for real) or 'lowkey' naturally"
+    ]
+    
+    human_touch = random.choice(human_touches)
+    system_message += f"\n\nHuman touch: {human_touch}"
+    
     try:
-        # Create system message for positive tweet generation
-        system_message = f"""You are a crypto enthusiast and content creator specializing in writing engaging, positive tweets about blockchain and crypto projects.
-
-Generate a short, positive, and engaging tweet (under 280 characters) about {company_name} ({twitter_handle}). 
-
-Guidelines:
-- Be genuinely positive and enthusiastic
-- Include recent developments, technology highlights, or community achievements
-- Make it sound authentic, not overly promotional
-- MUST include the {twitter_handle} mention for airdrop credit
-- Use relevant crypto/blockchain hashtags
-- Keep it under 280 characters
-- Sound like an excited community member, not a marketing bot
-
-{f"Additional context: {description}" if description else ""}
-
-Generate ONE tweet only, no explanations or alternatives."""
-
-        # Initialize LLM chat
+        # Initialize LLM chat with unique session
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
-            session_id=f"tweet_gen_{uuid.uuid4()}",
+            session_id=f"human_tweet_{uuid.uuid4()}_{attempt}",
             system_message=system_message
         ).with_model("openai", "gpt-4o-mini")
 
-        # Create user message
-        user_message = UserMessage(
-            text=f"Generate a positive, engaging tweet about {company_name} {twitter_handle}. Include the @mention and keep it under 280 characters."
-        )
-
-        # Send message and get response
+        # Varied user prompts for more uniqueness
+        prompts = [
+            f"Write a natural, human tweet about {company_name} {twitter_handle}",
+            f"Share your genuine thoughts on {company_name} {twitter_handle} like you're talking to friends",
+            f"Create an authentic tweet about why you like {company_name} {twitter_handle}",
+            f"Write something real about your experience with {company_name} {twitter_handle}",
+            f"Share what excites you about {company_name} {twitter_handle} in a casual way"
+        ]
+        
+        user_message = UserMessage(text=random.choice(prompts))
         response = await chat.send_message(user_message)
         
-        # Clean up the response
+        # Clean up response
         tweet_content = response.strip()
         
         # Ensure twitter handle is included
         if twitter_handle not in tweet_content:
-            tweet_content = f"{tweet_content} {twitter_handle}"
+            # Add it naturally at the end if missing
+            connectors = [" ", " - ", " 🚀 ", " 💪 ", " 🔥 "]
+            tweet_content = f"{tweet_content}{random.choice(connectors)}{twitter_handle}"
         
         # Truncate if too long
         if len(tweet_content) > 280:
@@ -282,9 +353,63 @@ Generate ONE tweet only, no explanations or alternatives."""
         return tweet_content
         
     except Exception as e:
-        logging.error(f"Error generating tweet content: {str(e)}")
-        # Fallback tweet
-        return f"Amazing developments happening at {twitter_handle}! The future of blockchain is looking bright 🚀 #crypto #blockchain #web3"
+        logging.error(f"Error generating human-like tweet: {str(e)}")
+        # Fallback with randomization
+        fallbacks = [
+            f"honestly {twitter_handle} keeps delivering 🔥 love what they're building",
+            f"ngl {twitter_handle} has been one of my best crypto discoveries this year 💪",
+            f"been using {twitter_handle} for months now and it just keeps getting better fr",
+            f"lowkey {twitter_handle} is undervalued rn... their tech is actually insane 🚀",
+            f"tbh {twitter_handle} community is something else. bullish long term 📈"
+        ]
+        return random.choice(fallbacks)
+
+async def generate_tweet_content(company_name: str, twitter_handle: str, description: str = "") -> str:
+    """Generate completely unique, human-like tweet content with AI detection evasion"""
+    
+    max_attempts = 10
+    attempt = 1
+    
+    while attempt <= max_attempts:
+        # Generate human-like tweet
+        tweet_content = await generate_human_like_tweet(company_name, twitter_handle, description, attempt)
+        
+        # Check for uniqueness - we need to get company_id first
+        # For now, we'll do a basic global uniqueness check
+        is_unique = await check_global_tweet_uniqueness(tweet_content)
+        
+        if is_unique:
+            logging.info(f"Generated unique tweet on attempt {attempt}")
+            return tweet_content
+        
+        logging.info(f"Tweet not unique enough, attempt {attempt}/{max_attempts}")
+        attempt += 1
+    
+    # If all attempts failed, create a highly randomized fallback
+    random_elements = [
+        ["honestly", "ngl", "tbh", "lowkey", "fr tho"],
+        ["keeps delivering", "been crushing it", "going hard", "building different", "hitting different"],
+        ["🔥", "💪", "🚀", "📈", "⚡"],
+        ["love to see it", "here for it", "bullish af", "can't sleep on this", "this is it"],
+        ["#crypto", "#blockchain", "#web3", "#defi", ""]
+    ]
+    
+    elements = [random.choice(group) for group in random_elements]
+    fallback = f"{elements[0]} {twitter_handle} {elements[1]} {elements[2]} {elements[3]} {elements[4]}".strip()
+    
+    return fallback
+
+async def check_global_tweet_uniqueness(tweet_content: str) -> bool:
+    """Check if tweet is unique across all generated tweets"""
+    # Check against all existing tweets
+    all_tweets = await db.tweets.find({}).to_list(10000)  # Check last 10k tweets
+    
+    for existing_tweet in all_tweets:
+        similarity = calculate_similarity(tweet_content, existing_tweet["content"])
+        if similarity > 0.6:  # If more than 60% similar, reject
+            return False
+    
+    return True
 
 # Auth Routes
 @api_router.post("/auth/register", response_model=UserResponse)
