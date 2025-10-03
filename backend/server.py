@@ -1473,16 +1473,37 @@ async def process_successful_payment(session_id: str, metadata: dict):
         logging.error(f"Error processing successful payment: {str(e)}")
 
 @api_router.get("/user/credits")
+def is_admin_user(user_email: str) -> bool:
+    """Check if user has admin privileges"""
+    return user_email == "admin@yapping.com"
+
+@api_router.get("/user/credits")
 async def get_user_credits(current_user: dict = Depends(get_current_user)):
     """Get user's current credit balance"""
+    # Admin gets unlimited credits
+    if is_admin_user(current_user.get("email", "")):
+        return {
+            "balance": 999999,  # Unlimited credits for admin
+            "transactions": [
+                {
+                    "session_id": "admin_unlimited",
+                    "credits": 999999,
+                    "type": "admin_grant",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            ],
+            "admin": True
+        }
+    
     user_credits = await db.user_credits.find_one({"user_id": current_user["id"]})
     
     if not user_credits:
-        return {"balance": 0, "transactions": []}
+        return {"balance": 0, "transactions": [], "admin": False}
         
     return {
         "balance": user_credits.get("balance", 0),
-        "transactions": user_credits.get("transactions", [])[-10:]  # Last 10 transactions
+        "transactions": user_credits.get("transactions", [])[-10:],  # Last 10 transactions
+        "admin": False
     }
 
 # Admin Routes
