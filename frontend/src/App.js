@@ -629,6 +629,8 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <PricingModal open={showPricing} onClose={() => setShowPricing(false)} />
     </div>
   );
 };
