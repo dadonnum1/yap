@@ -1472,7 +1472,6 @@ async def process_successful_payment(session_id: str, metadata: dict):
     except Exception as e:
         logging.error(f"Error processing successful payment: {str(e)}")
 
-@api_router.get("/user/credits")
 def is_admin_user(user_email: str) -> bool:
     """Check if user has admin privileges"""
     return user_email == "admin@yapping.com"
