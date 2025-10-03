@@ -330,12 +330,14 @@ const Dashboard = () => {
 
   const loadData = async () => {
     try {
-      const [companiesRes, tweetsRes] = await Promise.all([
+      const [companiesRes, tweetsRes, creditsRes] = await Promise.all([
         axios.get(`${API}/companies`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/tweets`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API}/tweets`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/user/credits`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setCompanies(companiesRes.data);
       setTweets(tweetsRes.data);
+      setCredits(creditsRes.data);
     } catch (error) {
       toast.error('Failed to load data');
     } finally {
