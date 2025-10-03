@@ -1526,7 +1526,11 @@ async def get_admin_me(current_admin: dict = Depends(get_current_admin)):
     return AdminResponse(**current_admin)
 
 @api_router.get("/admin/stats", response_model=SystemStats)
-async def get_system_stats(current_admin: dict = Depends(get_current_admin)):
+async def get_system_stats(current_user: dict = Depends(get_current_user)):
+    """Get system statistics - admin only"""
+    if not is_admin_user(current_user.get("email", "")):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
     # Get system statistics
     total_users = await db.users.count_documents({"is_active": True})
     total_companies = await db.companies.count_documents({"is_active": True})
