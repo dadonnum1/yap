@@ -318,9 +318,11 @@ const Dashboard = () => {
   const { user, logout, token } = useAuth();
   const [companies, setCompanies] = useState([]);
   const [tweets, setTweets] = useState([]);
+  const [credits, setCredits] = useState({ balance: 0, transactions: [] });
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('companies');
+  const [showPricing, setShowPricing] = useState(false);
 
   useEffect(() => {
     loadData();
