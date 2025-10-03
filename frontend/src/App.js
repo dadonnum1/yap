@@ -497,7 +497,7 @@ const Dashboard = () => {
         <div className="flex gap-4 mb-6">
           <Button 
             onClick={generateDailyTweets} 
-            disabled={generating || companies.length === 0}
+            disabled={generating || companies.length === 0 || credits.balance === 0}
             className="flex items-center gap-2"
             data-testid="generate-daily-button"
           >
@@ -505,7 +505,28 @@ const Dashboard = () => {
             {generating ? 'Generating...' : 'Generate Daily Tweets'}
           </Button>
           <AddCompanyDialog onCompanyAdded={loadData} />
+          <Button variant="outline" onClick={() => setShowPricing(true)} className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Buy Credits
+          </Button>
         </div>
+
+        {credits.balance === 0 && (
+          <Card className="mb-6 border-orange-200 bg-orange-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 text-orange-600" />
+                <div>
+                  <p className="font-medium text-orange-800">No Tweet Credits Remaining</p>
+                  <p className="text-sm text-orange-700">Purchase credits to generate AI-undetectable tweets</p>
+                </div>
+                <Button size="sm" onClick={() => setShowPricing(true)}>
+                  Get Credits
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
