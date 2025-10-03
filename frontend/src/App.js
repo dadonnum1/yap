@@ -1343,6 +1343,27 @@ function App() {
 
   return (
     <div className="App">
+      <Helmet>
+        <title>Yapping - AI Tweet Generator for Crypto Airdrops | Undetectable by AI Detection</title>
+        <meta name="description" content="Generate authentic, AI-undetectable tweets for crypto airdrops. Research-powered content that passes all AI detection tests. Earn more airdrop rewards with human-like tweets about blockchain projects." />
+        <meta name="keywords" content="crypto tweets, airdrop hunter, AI tweet generator, blockchain social media, crypto yapping, airdrop rewards, AI detection bypass, crypto content creation, twitter automation, defi tweets" />
+        
+        {/* Dynamic Open Graph tags */}
+        <meta property="og:title" content="Yapping - AI Tweet Generator for Crypto Airdrops | Undetectable by AI Detection" />
+        <meta property="og:description" content="Generate authentic, AI-undetectable tweets for crypto airdrops. Research-powered content that passes all AI detection tests. Earn more airdrop rewards with human-like tweets." />
+        <meta property="og:url" content="https://aiyappr.com" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://aiyappr.com/og-image.png" />
+        
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Yapping - AI Tweet Generator for Crypto Airdrops | Undetectable by AI Detection" />
+        <meta name="twitter:description" content="Generate authentic, AI-undetectable tweets for crypto airdrops. Research-powered content that passes all AI detection tests. Earn more airdrop rewards." />
+        <meta name="twitter:image" content="https://aiyappr.com/twitter-image.png" />
+        <meta name="twitter:url" content="https://aiyappr.com" />
+        
+        <link rel="canonical" href="https://aiyappr.com" />
+      </Helmet>
       {user ? <Dashboard /> : <AuthForm />}
       <Toaster position="top-right" />
     </div>
