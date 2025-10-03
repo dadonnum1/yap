@@ -735,7 +735,9 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Tweet Credits</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isAdmin ? "Admin Credits" : "Tweet Credits"}
+                  </p>
                   <p className="text-3xl font-bold text-blue-600" data-testid="credits-count">
                     {isAdmin ? "∞" : credits.balance}
                   </p>
