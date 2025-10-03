@@ -684,9 +684,16 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold text-gray-900">Yapping - AI Tweet Generator Dashboard</h1>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <User className="h-4 w-4" />
-              {user.email}
+            <div className="flex items-center gap-4">
+              <div className="text-xs text-gray-500 hidden md:block">
+                {getDisplayUrl().replace('https://', '')}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <User className="h-4 w-4" />
+                {user.email}
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
               {isAdmin && (
                 <Badge variant="destructive" className="ml-2">
                   ADMIN
