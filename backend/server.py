@@ -1069,14 +1069,11 @@ async def generate_custom_tweet(request: CustomTweetRequest, current_user: dict 
         
         # Generate tweet based on type
         if request.generation_type == "style_clone":
-            # Analyze the example tweet style
-            style_analysis = await analyze_tweet_style(request.example_tweet)
-            
-            # Generate style-matching tweet
+            # Generate rewrite of the example tweet
             content = await generate_style_clone_tweet(
                 company["company_name"],
                 company["twitter_handle"],
-                style_analysis,
+                request.example_tweet,
                 company_info
             )
             source_input = request.example_tweet
