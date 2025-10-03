@@ -640,47 +640,7 @@ async def check_global_tweet_uniqueness(tweet_content: str) -> bool:
     
     return True
 
-async def analyze_tweet_style(example_tweet: str) -> dict:
-    """Analyze the style, tone, and structure of an example tweet"""
-    try:
-        # Use LLM to analyze the tweet style
-        analysis_prompt = f"""Analyze this tweet and identify its key stylistic elements:
-
-Tweet: "{example_tweet}"
-
-Identify and describe:
-1. Tone (excited, casual, professional, humorous, etc.)
-2. Language style (formal, informal, slang, technical)
-3. Structure (how it's organized, sentence patterns)
-4. Emojis and symbols usage
-5. Hashtag style and placement
-6. Length and pacing
-7. Voice/personality (enthusiastic fan, expert, casual user, etc.)
-
-Provide a detailed style analysis that can be used to recreate similar tweets with different content."""
-
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"style_analysis_{uuid.uuid4()}",
-            system_message="You are an expert at analyzing writing styles and social media content. Provide detailed, actionable style analysis."
-        ).with_model("openai", "gpt-4o-mini")
-
-        user_message = UserMessage(text=analysis_prompt)
-        analysis = await chat.send_message(user_message)
-        
-        return {
-            "original_tweet": example_tweet,
-            "style_analysis": analysis.strip(),
-            "analyzed_at": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logging.error(f"Error analyzing tweet style: {str(e)}")
-        return {
-            "original_tweet": example_tweet,
-            "style_analysis": "Casual, enthusiastic crypto community style with emojis and hashtags",
-            "analyzed_at": datetime.utcnow().isoformat()
-        }
+# Simplified approach - no longer need separate style analysis
 
 async def generate_style_clone_tweet(company_name: str, twitter_handle: str, example_tweet: str, company_info: dict) -> str:
     """Generate a new tweet by rewriting the example tweet for the target company"""
