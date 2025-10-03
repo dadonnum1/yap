@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Twitter, Copy, RefreshCw, Trash2, LogOut, User, Calendar, Hash, CreditCard, Shield, CheckCircle } from 'lucide-react';
+import { PlusCircle, Twitter, Copy, RefreshCw, Trash2, LogOut, User, Calendar, Hash, CreditCard, Shield, CheckCircle, Sparkles, Lightbulb } from 'lucide-react';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
