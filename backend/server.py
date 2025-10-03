@@ -519,7 +519,7 @@ async def generate_tweets(tweet_data: TweetGenerate, current_user: dict = Depend
     
     generated_tweets = []
     for _ in range(min(tweet_data.count, 5)):  # Limit to 5 tweets per request
-        # Generate tweet content
+        # Generate unique tweet content with multiple attempts
         content = await generate_tweet_content(
             company["company_name"],
             company["twitter_handle"],
@@ -528,9 +528,8 @@ async def generate_tweets(tweet_data: TweetGenerate, current_user: dict = Depend
         
         content_hash = hash_content(content)
         
-        # Check if this exact tweet was already generated
+        # Double-check for exact duplicates (should be rare with new system)
         existing_tweet = await db.tweets.find_one({
-            "user_id": current_user["id"],
             "content_hash": content_hash
         })
         
