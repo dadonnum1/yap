@@ -422,9 +422,12 @@ Make it sound like something you'd actually say to friends, not a corporate anno
     elif style == "casual_investor":
         system_message = f"""You're a casual crypto investor sharing your genuine thoughts about {company_name}. Write like you're talking to other investors in a Discord or Twitter space.
 
-Share why you're bullish on {company_name} ({twitter_handle}) but keep it conversational and real. Use the kind of language actual crypto investors use - natural, sometimes imperfect, but authentic.
+Recent context: {recent_context}
+What they're building: {features_context}
 
-No corporate speak - just honest investor perspective. Under 280 characters."""
+Share why you're bullish on {company_name} ({twitter_handle}) but keep it conversational and real. Maybe reference recent developments or what caught your attention. Use the kind of language actual crypto investors use - natural, sometimes imperfect, but authentic.
+
+No corporate speak - just honest investor perspective based on what you've seen recently. Under 280 characters."""
 
     elif style == "tech_enthusiast":
         system_message = f"""You're a tech-savvy person who appreciates the technical aspects of {company_name}. Write about what impresses you technically, but in a way that shows you really understand and use the product.
