@@ -1038,6 +1038,119 @@ async def mark_tweet_copied(tweet_id: str, current_user: dict = Depends(get_curr
         )
     return {"message": "Tweet marked as copied"}
 
+@api_router.post("/tweets/custom", response_model=CustomTweetResponse)
+async def generate_custom_tweet(request: CustomTweetRequest, current_user: dict = Depends(get_current_user)):
+    """Generate custom tweet based on user idea or example tweet style"""
+    
+    # Validate request
+    if request.generation_type not in ["idea", "style_clone"]:
+        raise HTTPException(status_code=400, detail="Invalid generation type")
+    
+    if request.generation_type == "idea" and not request.custom_idea:
+        raise HTTPException(status_code=400, detail="Custom idea required for idea generation")
+        
+    if request.generation_type == "style_clone" and not request.example_tweet:
+        raise HTTPException(status_code=400, detail="Example tweet required for style cloning")
+    
+    # Get company
+    company = await db.companies.find_one({
+        "id": request.company_id,
+        "user_id": current_user["id"],
+        "is_active": True
+    })
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    try:
+        # Research company info for context
+        company_info = await research_company_info(
+            company["company_name"],
+            company["twitter_handle"]
+        )
+        
+        # Generate tweet based on type
+        if request.generation_type == "style_clone":
+            # Analyze the example tweet style
+            style_analysis = await analyze_tweet_style(request.example_tweet)
+            
+            # Generate style-matching tweet
+            content = await generate_style_clone_tweet(
+                company["company_name"],
+                company["twitter_handle"],
+                style_analysis,
+                company_info
+            )
+            source_input = request.example_tweet
+            
+        else:  # idea generation
+            # Generate tweet based on user's idea
+            content = await generate_idea_based_tweet(
+                company["company_name"],
+                company["twitter_handle"],
+                request.custom_idea,
+                company_info
+            )
+            source_input = request.custom_idea
+        
+        # Check uniqueness
+        content_hash = hash_content(content)
+        existing_tweet = await db.tweets.find_one({"content_hash": content_hash})
+        
+        if existing_tweet:
+            # Regenerate if duplicate (rare but possible)
+            content += f" 🔥"  # Small variation to ensure uniqueness
+            content_hash = hash_content(content)
+        
+        # Create tweet record
+        tweet = Tweet(
+            user_id=current_user["id"],
+            company_id=request.company_id,
+            content=content,
+            content_hash=content_hash
+        )
+        
+        await db.tweets.insert_one(tweet.dict())
+        
+        # Store custom generation metadata
+        await db.custom_tweets.insert_one({
+            "tweet_id": tweet.id,
+            "user_id": current_user["id"],
+            "generation_type": request.generation_type,
+            "source_input": source_input,
+            "created_at": datetime.utcnow()
+        })
+        
+        return CustomTweetResponse(
+            id=tweet.id,
+            company_id=request.company_id,
+            content=content,
+            generation_type=request.generation_type,
+            source_input=source_input,
+            generated_at=tweet.generated_at,
+            company_name=company["company_name"],
+            twitter_handle=company["twitter_handle"]
+        )
+        
+    except Exception as e:
+        logging.error(f"Error generating custom tweet: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate custom tweet")
+
+@api_router.post("/tweets/analyze-style")
+async def analyze_tweet_style_endpoint(example_tweet: str = "", current_user: dict = Depends(get_current_user)):
+    """Analyze the style of an example tweet (preview before generation)"""
+    if not example_tweet.strip():
+        raise HTTPException(status_code=400, detail="Example tweet is required")
+    
+    try:
+        analysis = await analyze_tweet_style(example_tweet.strip())
+        return {
+            "analysis": analysis,
+            "message": "Style analysis complete - use this for style cloning"
+        }
+    except Exception as e:
+        logging.error(f"Error analyzing tweet style: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to analyze tweet style")
+
 # Health check
 @api_router.get("/")
 async def root():
