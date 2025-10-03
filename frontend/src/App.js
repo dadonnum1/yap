@@ -724,6 +724,15 @@ const Dashboard = () => {
             {generating ? 'Generating...' : 'Generate Daily Tweets'}
           </Button>
           <AddCompanyDialog onCompanyAdded={loadData} />
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowCustomTweet(true)} 
+            className="flex items-center gap-2"
+            data-testid="custom-tweet-button"
+          >
+            <Sparkles className="h-4 w-4" />
+            Custom Tweet
+          </Button>
           <Button variant="outline" onClick={() => setShowPricing(true)} className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
             Buy Credits
