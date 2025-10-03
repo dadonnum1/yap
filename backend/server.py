@@ -152,6 +152,42 @@ class CompanyWithUser(BaseModel):
     user_email: str
     tweet_count: int
 
+# Payment Models
+class PaymentTransaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    session_id: str
+    payment_id: Optional[str] = None
+    package_id: str
+    amount: float
+    currency: str = "usd"
+    payment_status: str = "pending"  # pending, paid, failed, expired
+    status: str = "initiated"  # initiated, completed, expired
+    metadata: Optional[dict] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PaymentPackage(BaseModel):
+    package_id: str
+    name: str
+    description: str
+    amount: float
+    currency: str = "usd"
+    tweet_credits: int
+    features: List[str]
+
+class CreateCheckoutRequest(BaseModel):
+    package_id: str
+    origin_url: str
+
+class PaymentStatusResponse(BaseModel):
+    session_id: str
+    status: str
+    payment_status: str
+    amount: float
+    currency: str
+    package_info: Optional[dict] = None
+
 # Utility functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
