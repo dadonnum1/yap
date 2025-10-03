@@ -405,10 +405,17 @@ async def generate_human_like_tweet(company_name: str, twitter_handle: str, desc
     # Different prompt approaches for uniqueness
     style = random.choice(styles)
     
+    # Create context from research
+    recent_context = " ".join(company_info.get("recent_news", [])[:2])
+    features_context = " ".join(company_info.get("key_features", [])[:2])
+    
     if style == "excited_community_member":
         system_message = f"""You're an excited crypto community member who genuinely loves {company_name}. Write like a real person on Twitter - use natural language, maybe some slang, and show real enthusiasm. You're not a marketer, just a fan sharing your thoughts.
 
-Write a tweet about {company_name} that feels completely natural and human. Include {twitter_handle} naturally in your message.
+Recent context about {company_name}: {recent_context}
+Key features: {features_context}
+
+Write a tweet about {company_name} that feels completely natural and human. Include {twitter_handle} naturally in your message. Reference current/recent developments if relevant but keep it authentic.
 
 Make it sound like something you'd actually say to friends, not a corporate announcement. Use casual language, maybe throw in some crypto slang. Keep it under 280 chars."""
 
