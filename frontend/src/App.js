@@ -120,8 +120,12 @@ const AuthForm = () => {
             Yapping
           </CardTitle>
           <CardDescription>
-            Generate engaging tweets for crypto airdrops
+            Generate AI-undetectable tweets for crypto airdrops
           </CardDescription>
+          <div className="mt-4 flex items-center justify-center gap-2 text-sm bg-green-50 text-green-700 px-3 py-2 rounded-lg">
+            <Shield className="h-4 w-4" />
+            ✅ Passes AI Detection Tests
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
