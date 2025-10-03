@@ -682,31 +682,30 @@ Provide a detailed style analysis that can be used to recreate similar tweets wi
             "analyzed_at": datetime.utcnow().isoformat()
         }
 
-async def generate_style_clone_tweet(company_name: str, twitter_handle: str, style_analysis: dict, company_info: dict) -> str:
-    """Generate a new tweet that matches the style of an example tweet"""
+async def generate_style_clone_tweet(company_name: str, twitter_handle: str, example_tweet: str, company_info: dict) -> str:
+    """Generate a new tweet by rewriting the example tweet for the target company"""
     try:
         # Create context from research
-        recent_context = " ".join(company_info.get("recent_news", [])[:2])
-        features_context = " ".join(company_info.get("key_features", [])[:2])
+        recent_context = " ".join(company_info.get("recent_news", [])[:2]) if company_info.get("recent_news") else ""
+        features_context = " ".join(company_info.get("key_features", [])[:2]) if company_info.get("key_features") else ""
         
-        system_message = f"""You are a skilled social media content creator. Create a new tweet about {company_name} ({twitter_handle}) that matches the exact style and tone of the analyzed example.
-
-Style Analysis to Match: {style_analysis.get('style_analysis', '')}
+        system_message = f"""You are a skilled social media content creator. Rewrite the provided example tweet to be about {company_name} ({twitter_handle}) while maintaining the same style, tone, and structure.
 
 Company Context:
 - Recent developments: {recent_context}
 - Key features: {features_context}
 
 Requirements:
-1. Match the EXACT tone, language style, and structure from the analysis
+1. Keep the same writing style, tone, and structure as the example
 2. Include {twitter_handle} naturally in the tweet
-3. Make it about {company_name} specifically
-4. Use current/accurate information about the company
-5. Keep under 280 characters
-6. Make it completely unique content (not a copy of the original)
-7. Maintain human authenticity and crypto community voice
+3. Make it specifically about {company_name}
+4. Keep under 280 characters
+5. Make it completely original content (not a copy)
+6. Maintain authenticity and crypto community voice
 
-Generate ONE tweet that captures the style perfectly while being completely original content about {company_name}."""
+Original tweet to rewrite: "{example_tweet}"
+
+Rewrite this tweet to be about {company_name} instead, keeping the same style and energy."""
 
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
@@ -715,7 +714,7 @@ Generate ONE tweet that captures the style perfectly while being completely orig
         ).with_model("openai", "gpt-4o-mini")
 
         user_message = UserMessage(
-            text=f"Create a style-matching tweet about {company_name} {twitter_handle}"
+            text=f"Rewrite the example tweet to be about {company_name} {twitter_handle}"
         )
         
         response = await chat.send_message(user_message)
