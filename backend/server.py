@@ -640,6 +640,155 @@ async def check_global_tweet_uniqueness(tweet_content: str) -> bool:
     
     return True
 
+async def analyze_tweet_style(example_tweet: str) -> dict:
+    """Analyze the style, tone, and structure of an example tweet"""
+    try:
+        # Use LLM to analyze the tweet style
+        analysis_prompt = f"""Analyze this tweet and identify its key stylistic elements:
+
+Tweet: "{example_tweet}"
+
+Identify and describe:
+1. Tone (excited, casual, professional, humorous, etc.)
+2. Language style (formal, informal, slang, technical)
+3. Structure (how it's organized, sentence patterns)
+4. Emojis and symbols usage
+5. Hashtag style and placement
+6. Length and pacing
+7. Voice/personality (enthusiastic fan, expert, casual user, etc.)
+
+Provide a detailed style analysis that can be used to recreate similar tweets with different content."""
+
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"style_analysis_{uuid.uuid4()}",
+            system_message="You are an expert at analyzing writing styles and social media content. Provide detailed, actionable style analysis."
+        ).with_model("openai", "gpt-4o-mini")
+
+        user_message = UserMessage(text=analysis_prompt)
+        analysis = await chat.send_message(user_message)
+        
+        return {
+            "original_tweet": example_tweet,
+            "style_analysis": analysis.strip(),
+            "analyzed_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error analyzing tweet style: {str(e)}")
+        return {
+            "original_tweet": example_tweet,
+            "style_analysis": "Casual, enthusiastic crypto community style with emojis and hashtags",
+            "analyzed_at": datetime.utcnow().isoformat()
+        }
+
+async def generate_style_clone_tweet(company_name: str, twitter_handle: str, style_analysis: dict, company_info: dict) -> str:
+    """Generate a new tweet that matches the style of an example tweet"""
+    try:
+        # Create context from research
+        recent_context = " ".join(company_info.get("recent_news", [])[:2])
+        features_context = " ".join(company_info.get("key_features", [])[:2])
+        
+        system_message = f"""You are a skilled social media content creator. Create a new tweet about {company_name} ({twitter_handle}) that matches the exact style and tone of the analyzed example.
+
+Style Analysis to Match: {style_analysis.get('style_analysis', '')}
+
+Company Context:
+- Recent developments: {recent_context}
+- Key features: {features_context}
+
+Requirements:
+1. Match the EXACT tone, language style, and structure from the analysis
+2. Include {twitter_handle} naturally in the tweet
+3. Make it about {company_name} specifically
+4. Use current/accurate information about the company
+5. Keep under 280 characters
+6. Make it completely unique content (not a copy of the original)
+7. Maintain human authenticity and crypto community voice
+
+Generate ONE tweet that captures the style perfectly while being completely original content about {company_name}."""
+
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"style_clone_{uuid.uuid4()}",
+            system_message=system_message
+        ).with_model("openai", "gpt-4o-mini")
+
+        user_message = UserMessage(
+            text=f"Create a style-matching tweet about {company_name} {twitter_handle}"
+        )
+        
+        response = await chat.send_message(user_message)
+        tweet_content = response.strip()
+        
+        # Ensure twitter handle is included
+        if twitter_handle not in tweet_content:
+            tweet_content = f"{tweet_content} {twitter_handle}"
+        
+        # Truncate if too long
+        if len(tweet_content) > 280:
+            tweet_content = tweet_content[:277] + "..."
+            
+        return tweet_content
+        
+    except Exception as e:
+        logging.error(f"Error generating style clone tweet: {str(e)}")
+        return f"Really impressed with the innovation at {twitter_handle}! The tech they're building is game-changing 🚀 #crypto"
+
+async def generate_idea_based_tweet(company_name: str, twitter_handle: str, user_idea: str, company_info: dict) -> str:
+    """Generate a tweet based on user's custom idea"""
+    try:
+        # Create context from research
+        recent_context = " ".join(company_info.get("recent_news", [])[:2])
+        features_context = " ".join(company_info.get("key_features", [])[:2])
+        
+        system_message = f"""You are a crypto community member creating authentic tweets. Generate a tweet about {company_name} ({twitter_handle}) based on the user's specific idea or angle.
+
+User's Idea/Angle: "{user_idea}"
+
+Company Context:
+- Recent developments: {recent_context}  
+- Key features: {features_context}
+
+Requirements:
+1. Build the tweet around the user's specific idea/angle
+2. Include {twitter_handle} naturally
+3. Make it sound authentic and human (not AI-generated)
+4. Use casual crypto community language and slang
+5. Include relevant accurate information about {company_name}
+6. Keep under 280 characters
+7. Add appropriate emojis and hashtags if they fit the idea
+8. Sound like a real person sharing their genuine thoughts
+
+Create ONE tweet that perfectly captures the user's idea while being authentic and informative."""
+
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"idea_tweet_{uuid.uuid4()}",
+            system_message=system_message
+        ).with_model("openai", "gpt-4o-mini")
+
+        user_message = UserMessage(
+            text=f"Create a tweet about {company_name} {twitter_handle} based on this idea: {user_idea}"
+        )
+        
+        response = await chat.send_message(user_message)
+        tweet_content = response.strip()
+        
+        # Ensure twitter handle is included
+        if twitter_handle not in tweet_content:
+            tweet_content = f"{tweet_content} {twitter_handle}"
+        
+        # Truncate if too long
+        if len(tweet_content) > 280:
+            tweet_content = tweet_content[:277] + "..."
+            
+        return tweet_content
+        
+    except Exception as e:
+        logging.error(f"Error generating idea-based tweet: {str(e)}")
+        return f"Love the vision behind {twitter_handle}! {user_idea} 🚀 #crypto"
+
 # Auth Routes
 @api_router.post("/auth/register", response_model=UserResponse)
 async def register(user_data: UserCreate):
