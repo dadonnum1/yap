@@ -1,1 +1,76 @@
-null
+[
+  {
+    "test": "User Login",
+    "success": true,
+    "message": "Login successful",
+    "timestamp": "2025-10-03T21:52:18.743441",
+    "details": {
+      "token_type": "bearer"
+    }
+  },
+  {
+    "test": "Company Creation",
+    "success": true,
+    "message": "Test company created successfully",
+    "timestamp": "2025-10-03T21:52:18.762073",
+    "details": {
+      "company_id": "378e525a-f94a-4848-9b89-d8b2a1018cb7",
+      "name": "Ethereum"
+    }
+  },
+  {
+    "test": "Custom Tweet Style Clone",
+    "success": true,
+    "message": "Style clone tweet generated successfully",
+    "timestamp": "2025-10-03T21:52:20.187746",
+    "details": {
+      "original_tweet": "Just discovered this amazing DeFi protocol! \ud83d\ude80 The yields are incredible! #DeFi #crypto",
+      "generated_tweet": "\"Just dived into the incredible world of @ethereum! \ud83c\udf1f The Layer 2 scaling solutions are a game changer! LFG! #Ethereum #DeFi #crypto\"",
+      "generation_type": "style_clone",
+      "company": "Ethereum",
+      "handle": "@ethereum"
+    }
+  },
+  {
+    "test": "Custom Tweet Idea Generation",
+    "success": true,
+    "message": "Idea-based tweet generated successfully",
+    "timestamp": "2025-10-03T21:52:22.151316",
+    "details": {
+      "idea": "Talk about the recent network upgrades and improved scalability",
+      "generated_tweet": "\ud83d\ude80\ud83d\udd25 Just had a deep dive into @ethereum's recent upgrades! With Layer 2 solutions rolling out, the scalability is on another level! \ud83c\udf15 DeFi is thriving like never before, and I\u2019m here for it! \ud83d\ude4c Proof of Stake is just the cherry on top! \ud83c\udf52 #Ethereum #DeFi #Scalability #ETH \ud83e\udd73",
+      "generation_type": "idea"
+    }
+  },
+  {
+    "test": "Analyze Style Endpoint Removal",
+    "success": true,
+    "message": "Analyze-style endpoint properly removed (404 response)",
+    "timestamp": "2025-10-03T21:52:22.158580",
+    "details": {}
+  },
+  {
+    "test": "Invalid Generation Type",
+    "success": true,
+    "message": "Properly rejected invalid generation type",
+    "timestamp": "2025-10-03T21:52:22.166457",
+    "details": {}
+  },
+  {
+    "test": "Missing Required Fields",
+    "success": true,
+    "message": "Properly rejected missing example_tweet for style_clone",
+    "timestamp": "2025-10-03T21:52:22.217219",
+    "details": {}
+  },
+  {
+    "test": "Regular Tweet Generation",
+    "success": true,
+    "message": "Regular tweet generation works",
+    "timestamp": "2025-10-03T21:52:23.357921",
+    "details": {
+      "tweet_content": "Ngl, watching @ethereum evolve has been a wild ride! From the early days of smart contracts to the promise of scalability with sharding, I truly believe in its long-term vision. It feels like we\u2019re just scratching the surface of what\u2019s possible. Excited for the future!\ud83d\udc99\u2728",
+      "company": "Ethereum"
+    }
+  }
+]
