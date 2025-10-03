@@ -173,6 +173,224 @@ const AuthForm = () => {
   );
 };
 
+// Custom Tweet Dialog
+const CustomTweetDialog = ({ open, onClose, companies, onTweetGenerated }) => {
+  const { token } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [generationType, setGenerationType] = useState('idea');
+  const [formData, setFormData] = useState({
+    company_id: '',
+    custom_idea: '',
+    example_tweet: ''
+  });
+  const [styleAnalysis, setStyleAnalysis] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.company_id) {
+      toast.error('Please select a company');
+      return;
+    }
+
+    if (generationType === 'idea' && !formData.custom_idea.trim()) {
+      toast.error('Please enter your tweet idea');
+      return;
+    }
+
+    if (generationType === 'style_clone' && !formData.example_tweet.trim()) {
+      toast.error('Please provide an example tweet');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const requestData = {
+        company_id: formData.company_id,
+        generation_type: generationType
+      };
+
+      if (generationType === 'idea') {
+        requestData.custom_idea = formData.custom_idea.trim();
+      } else {
+        requestData.example_tweet = formData.example_tweet.trim();
+      }
+
+      const response = await axios.post(`${API}/tweets/custom`, requestData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success('Custom tweet generated successfully!');
+      setFormData({ company_id: '', custom_idea: '', example_tweet: '' });
+      setStyleAnalysis(null);
+      onClose();
+      onTweetGenerated();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to generate custom tweet');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const analyzeStyle = async () => {
+    if (!formData.example_tweet.trim()) {
+      toast.error('Please enter an example tweet first');
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      const response = await axios.post(`${API}/tweets/analyze-style`, 
+        `example_tweet=${encodeURIComponent(formData.example_tweet.trim())}`,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        }
+      );
+      setStyleAnalysis(response.data.analysis);
+      toast.success('Style analyzed successfully!');
+    } catch (error) {
+      toast.error('Failed to analyze tweet style');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            Custom Tweet Generator
+          </DialogTitle>
+          <CardDescription>
+            Generate tweets from your ideas or clone the style of tweets you love
+          </CardDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Generation Type Selection */}
+          <div className="space-y-3">
+            <Label>Generation Type</Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="idea"
+                  name="generationType"
+                  value="idea"
+                  checked={generationType === 'idea'}
+                  onChange={(e) => setGenerationType(e.target.value)}
+                />
+                <Label htmlFor="idea" className="flex items-center gap-2 cursor-pointer">
+                  <Lightbulb className="h-4 w-4" />
+                  From Your Idea
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="style_clone"
+                  name="generationType"
+                  value="style_clone"
+                  checked={generationType === 'style_clone'}
+                  onChange={(e) => setGenerationType(e.target.value)}
+                />
+                <Label htmlFor="style_clone" className="flex items-center gap-2 cursor-pointer">
+                  <Copy className="h-4 w-4" />
+                  Clone Tweet Style
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          {/* Company Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="company">Company</Label>
+            <select
+              id="company"
+              value={formData.company_id}
+              onChange={(e) => setFormData({...formData, company_id: e.target.value})}
+              className="w-full p-2 border rounded-md"
+              required
+              data-testid="custom-company-select"
+            >
+              <option value="">Select a company...</option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.company_name} ({company.twitter_handle})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Idea Input */}
+          {generationType === 'idea' && (
+            <div className="space-y-2">
+              <Label htmlFor="custom_idea">Your Tweet Idea</Label>
+              <Textarea
+                id="custom_idea"
+                value={formData.custom_idea}
+                onChange={(e) => setFormData({...formData, custom_idea: e.target.value})}
+                placeholder="E.g., 'I love how this project is solving scalability issues' or 'This reminds me of early Ethereum vibes'"
+                rows={3}
+                data-testid="custom-idea-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Describe what you want to say about this company - we'll make it sound natural and authentic
+              </p>
+            </div>
+          )}
+
+          {/* Example Tweet Input */}
+          {generationType === 'style_clone' && (
+            <div className="space-y-2">
+              <Label htmlFor="example_tweet">Example Tweet to Clone</Label>
+              <Textarea
+                id="example_tweet"
+                value={formData.example_tweet}
+                onChange={(e) => setFormData({...formData, example_tweet: e.target.value})}
+                placeholder="Paste a tweet whose style you want to copy..."
+                rows={3}
+                data-testid="example-tweet-input"
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={analyzeStyle}
+                  disabled={analyzing || !formData.example_tweet.trim()}
+                >
+                  {analyzing ? 'Analyzing...' : 'Analyze Style'}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Analyze the style first to see what we'll copy
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Style Analysis Results */}
+          {styleAnalysis && (
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-medium text-blue-800 mb-2">Style Analysis:</h4>
+              <p className="text-sm text-blue-700">{styleAnalysis.style_analysis}</p>
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" disabled={loading} data-testid="generate-custom-tweet">
+            {loading ? 'Generating...' : `Generate ${generationType === 'idea' ? 'Idea-Based' : 'Style-Cloned'} Tweet`}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // Add Company Dialog
 const AddCompanyDialog = ({ onCompanyAdded }) => {
   const { token } = useAuth();
