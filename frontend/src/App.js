@@ -114,6 +114,10 @@ const AuthForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+      <Helmet>
+        <title>{isLogin ? 'Login - Yapping | AI Tweet Generator for Crypto Airdrops' : 'Sign Up - Yapping | AI Tweet Generator for Crypto Airdrops'}</title>
+        <meta name="description" content={isLogin ? "Login to your Yapping account to generate AI-undetectable tweets for crypto airdrops and earn more rewards" : "Create your free Yapping account to start generating AI-undetectable tweets for crypto airdrop hunting"} />
+      </Helmet>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
