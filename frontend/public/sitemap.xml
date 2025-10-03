@@ -6,35 +6,35 @@
 
   <!-- Main Pages -->
   <url>
-    <loc>https://yapping.ai/</loc>
+    <loc>https://aiyappr.com/</loc>
     <lastmod>2025-01-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   
   <url>
-    <loc>https://yapping.ai/features</loc>
+    <loc>https://aiyappr.com/features</loc>
     <lastmod>2025-01-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://yapping.ai/pricing</loc>
+    <loc>https://aiyappr.com/pricing</loc>
     <lastmod>2025-01-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://yapping.ai/about</loc>
+    <loc>https://aiyappr.com/about</loc>
     <lastmod>2025-01-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://yapping.ai/blog</loc>
+    <loc>https://aiyappr.com/blog</loc>
     <lastmod>2025-01-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
