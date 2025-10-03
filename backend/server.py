@@ -542,6 +542,223 @@ async def mark_tweet_copied(tweet_id: str, current_user: dict = Depends(get_curr
 async def root():
     return {"message": "Yapping API is running! Ready to generate tweets for airdrop hunting! 🚀"}
 
+# Admin Routes
+@api_router.post("/admin/login", response_model=Token)
+async def admin_login(admin_data: AdminLogin):
+    # Find admin
+    admin = await db.admins.find_one({"username": admin_data.username, "is_active": True})
+    if not admin or not verify_password(admin_data.password, admin["password_hash"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password"
+        )
+    
+    # Create admin access token
+    access_token = create_admin_token(admin["id"])
+    return Token(access_token=access_token, token_type="bearer")
+
+@api_router.get("/admin/me", response_model=AdminResponse)
+async def get_admin_me(current_admin: dict = Depends(get_current_admin)):
+    return AdminResponse(**current_admin)
+
+@api_router.get("/admin/stats", response_model=SystemStats)
+async def get_system_stats(current_admin: dict = Depends(get_current_admin)):
+    # Get system statistics
+    total_users = await db.users.count_documents({"is_active": True})
+    total_companies = await db.companies.count_documents({"is_active": True})
+    total_tweets = await db.tweets.count_documents({})
+    active_users = await db.users.count_documents({"is_active": True})
+    
+    # Tweets created today
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    tweets_today = await db.tweets.count_documents({"generated_at": {"$gte": today}})
+    
+    return SystemStats(
+        total_users=total_users,
+        total_companies=total_companies,
+        total_tweets=total_tweets,
+        active_users=active_users,
+        tweets_today=tweets_today
+    )
+
+@api_router.get("/admin/users", response_model=List[UserWithStats])
+async def get_all_users(current_admin: dict = Depends(get_current_admin)):
+    # Aggregation pipeline to get users with stats
+    pipeline = [
+        {"$match": {}},
+        {"$lookup": {
+            "from": "companies",
+            "let": {"user_id": "$id"},
+            "pipeline": [
+                {"$match": {"$expr": {"$and": [
+                    {"$eq": ["$user_id", "$$user_id"]},
+                    {"$eq": ["$is_active", True]}
+                ]}}}
+            ],
+            "as": "companies"
+        }},
+        {"$lookup": {
+            "from": "tweets",
+            "let": {"user_id": "$id"},
+            "pipeline": [
+                {"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}}},
+                {"$sort": {"generated_at": -1}},
+                {"$limit": 1}
+            ],
+            "as": "last_tweet"
+        }},
+        {"$addFields": {
+            "company_count": {"$size": "$companies"},
+            "tweet_count": {"$size": {"$ifNull": [
+                {"$lookup": {
+                    "from": "tweets",
+                    "localField": "id",
+                    "foreignField": "user_id",
+                    "as": "all_tweets"
+                }}, []
+            ]}},
+            "last_tweet": {"$arrayElemAt": ["$last_tweet.generated_at", 0]}
+        }},
+        {"$project": {
+            "password_hash": 0,
+            "companies": 0,
+            "all_tweets": 0
+        }}
+    ]
+    
+    users = await db.users.aggregate(pipeline).to_list(1000)
+    
+    result = []
+    for user in users:
+        # Count tweets for this user
+        tweet_count = await db.tweets.count_documents({"user_id": user["id"]})
+        
+        result.append(UserWithStats(
+            id=user["id"],
+            email=user["email"],
+            created_at=user["created_at"],
+            is_active=user["is_active"],
+            company_count=user.get("company_count", 0),
+            tweet_count=tweet_count,
+            last_tweet=user.get("last_tweet")
+        ))
+    
+    return result
+
+@api_router.get("/admin/companies", response_model=List[CompanyWithUser])
+async def get_all_companies(current_admin: dict = Depends(get_current_admin)):
+    # Aggregation pipeline to get companies with user info
+    pipeline = [
+        {"$lookup": {
+            "from": "users",
+            "localField": "user_id",
+            "foreignField": "id",
+            "as": "user"
+        }},
+        {"$unwind": "$user"},
+        {"$sort": {"created_at": -1}}
+    ]
+    
+    companies = await db.companies.aggregate(pipeline).to_list(1000)
+    
+    result = []
+    for company in companies:
+        # Count tweets for this company
+        tweet_count = await db.tweets.count_documents({"company_id": company["id"]})
+        
+        result.append(CompanyWithUser(
+            id=company["id"],
+            twitter_handle=company["twitter_handle"],
+            company_name=company["company_name"],
+            description=company.get("description"),
+            created_at=company["created_at"],
+            is_active=company["is_active"],
+            user_email=company["user"]["email"],
+            tweet_count=tweet_count
+        ))
+    
+    return result
+
+@api_router.get("/admin/tweets")
+async def get_all_tweets(current_admin: dict = Depends(get_current_admin)):
+    # Get all tweets with user and company information
+    pipeline = [
+        {"$lookup": {
+            "from": "companies",
+            "localField": "company_id",
+            "foreignField": "id",
+            "as": "company"
+        }},
+        {"$lookup": {
+            "from": "users",
+            "localField": "user_id",
+            "foreignField": "id",
+            "as": "user"
+        }},
+        {"$unwind": "$company"},
+        {"$unwind": "$user"},
+        {"$sort": {"generated_at": -1}},
+        {"$limit": 200}
+    ]
+    
+    tweets = await db.tweets.aggregate(pipeline).to_list(200)
+    
+    return [
+        {
+            "id": tweet["id"],
+            "content": tweet["content"],
+            "generated_at": tweet["generated_at"],
+            "copied_at": tweet.get("copied_at"),
+            "company_name": tweet["company"]["company_name"],
+            "twitter_handle": tweet["company"]["twitter_handle"],
+            "user_email": tweet["user"]["email"]
+        }
+        for tweet in tweets
+    ]
+
+@api_router.post("/admin/users/{user_id}/toggle")
+async def toggle_user_status(user_id: str, current_admin: dict = Depends(get_current_admin)):
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    new_status = not user["is_active"]
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"is_active": new_status}}
+    )
+    
+    return {"message": f"User {'activated' if new_status else 'deactivated'} successfully"}
+
+@api_router.delete("/admin/companies/{company_id}")
+async def admin_delete_company(company_id: str, current_admin: dict = Depends(get_current_admin)):
+    result = await db.companies.update_one(
+        {"id": company_id},
+        {"$set": {"is_active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    return {"message": "Company deactivated successfully"}
+
+@api_router.post("/admin/setup")
+async def setup_admin():
+    """One-time setup endpoint to create default admin"""
+    # Check if admin already exists
+    existing_admin = await db.admins.find_one({})
+    if existing_admin:
+        raise HTTPException(status_code=400, detail="Admin already exists")
+    
+    # Create default admin
+    admin = Admin(
+        username="admin",
+        password_hash=hash_password("admin123")
+    )
+    
+    await db.admins.insert_one(admin.dict())
+    
+    return {"message": "Admin created successfully", "username": "admin", "password": "admin123"}
+
 # Debug endpoints removed
 
 # Include router
