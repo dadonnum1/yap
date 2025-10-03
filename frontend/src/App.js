@@ -18,6 +18,18 @@ import './App.css';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Replace any emergent domain references with custom domain for display purposes
+const getDisplayUrl = () => {
+  if (typeof window !== 'undefined' && window.location.origin) {
+    const currentUrl = window.location.origin;
+    if (currentUrl.includes('.emergent') || currentUrl.includes('.emergentagent')) {
+      return 'https://aiyappr.com';
+    }
+    return currentUrl;
+  }
+  return 'https://aiyappr.com';
+};
+
 // Auth Context
 const AuthContext = React.createContext();
 
