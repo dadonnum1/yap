@@ -999,7 +999,7 @@ const PricingModal = ({ open, onClose }) => {
     try {
       const response = await axios.post(`${API}/payments/checkout/session`, {
         package_id: packageId,
-        origin_url: window.location.origin
+        origin_url: getDisplayUrl()
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
