@@ -124,7 +124,7 @@ def create_access_token(data: dict):
 def hash_content(content: str) -> str:
     return hashlib.md5(content.encode()).hexdigest()
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())) -> dict:
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         user_id: str = payload.get("sub")
