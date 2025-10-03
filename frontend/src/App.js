@@ -659,6 +659,11 @@ const Dashboard = () => {
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <User className="h-4 w-4" />
               {user.email}
+              {isAdmin && (
+                <Badge variant="destructive" className="ml-2">
+                  ADMIN
+                </Badge>
+              )}
             </div>
             <Button variant="outline" onClick={logout} size="sm" data-testid="logout-button">
               <LogOut className="h-4 w-4 mr-2" />
