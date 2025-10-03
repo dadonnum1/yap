@@ -272,6 +272,55 @@ def create_admin_token(admin_id: str):
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
+# Payment packages - FIXED PRICES (never take from frontend!)
+PAYMENT_PACKAGES = {
+    "starter": PaymentPackage(
+        package_id="starter",
+        name="Starter Plan",
+        description="Perfect for beginners - AI detection resistant tweets",
+        amount=9.99,
+        currency="usd", 
+        tweet_credits=100,
+        features=[
+            "100 unique tweets per month",
+            "✅ Passes AI detection tests", 
+            "5 companies maximum",
+            "Basic human-like writing styles"
+        ]
+    ),
+    "pro": PaymentPackage(
+        package_id="pro", 
+        name="Pro Plan",
+        description="For serious airdrop hunters - Advanced AI evasion",
+        amount=29.99,
+        currency="usd",
+        tweet_credits=500,
+        features=[
+            "500 unique tweets per month",
+            "✅ Advanced AI detection evasion",
+            "20 companies maximum", 
+            "Multiple writing personalities",
+            "Premium crypto slang library"
+        ]
+    ),
+    "enterprise": PaymentPackage(
+        package_id="enterprise",
+        name="Enterprise Plan", 
+        description="Unlimited yapping with maximum uniqueness guarantee",
+        amount=99.99,
+        currency="usd",
+        tweet_credits=2000,
+        features=[
+            "2000 unique tweets per month",
+            "✅ Undetectable by AI systems",
+            "Unlimited companies",
+            "Human-level authenticity",
+            "Priority generation queue",
+            "Custom writing styles"
+        ]
+    )
+}
+
 import random
 import re
 from difflib import SequenceMatcher
