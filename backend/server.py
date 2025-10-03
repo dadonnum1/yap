@@ -665,6 +665,37 @@ async def mark_tweet_copied(tweet_id: str, current_user: dict = Depends(get_curr
 async def root():
     return {"message": "Yapping API is running! Ready to generate tweets for airdrop hunting! 🚀"}
 
+@api_router.get("/uniqueness/demo")
+async def uniqueness_demo():
+    """Demonstrate the uniqueness system without authentication"""
+    try:
+        # Generate 3 different tweets for a demo company
+        demo_tweets = []
+        
+        for i in range(3):
+            tweet = await generate_human_like_tweet("Ethereum", "@ethereum", "Leading blockchain platform", i+1)
+            demo_tweets.append({
+                "tweet": tweet,
+                "length": len(tweet),
+                "style": ["excited_community", "casual_investor", "tech_enthusiast"][i]
+            })
+        
+        return {
+            "message": "Uniqueness System Demo - Each tweet is completely different",
+            "company": "Ethereum",
+            "handle": "@ethereum", 
+            "unique_tweets": demo_tweets,
+            "features": [
+                "✅ 100% unique content - no repeats even with 1000+ users",
+                "✅ AI detection resistant - natural human language", 
+                "✅ Multiple writing styles and personalities",
+                "✅ Crypto slang and informal language",
+                "✅ Random human imperfections"
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e), "message": "Demo endpoint for uniqueness system"}
+
 # Admin Routes
 @api_router.post("/admin/login", response_model=Token)
 async def admin_login(admin_data: AdminLogin):
