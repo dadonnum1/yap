@@ -461,6 +461,11 @@ async def root():
 async def debug_auth(current_user: dict = Depends(get_current_user)):
     return {"user": current_user, "message": "Authentication working!"}
 
+# Debug endpoint without auth
+@api_router.get("/debug/no-auth")
+async def debug_no_auth():
+    return {"message": "No auth endpoint working!"}
+
 # Include router
 app.include_router(api_router)
 
