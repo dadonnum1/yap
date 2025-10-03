@@ -810,11 +810,60 @@ async def mark_tweet_copied(tweet_id: str, current_user: dict = Depends(get_curr
 async def root():
     return {"message": "Yapping API is running! Ready to generate tweets for airdrop hunting! 🚀"}
 
+@api_router.get("/research/company/{company_id}")
+async def research_company_endpoint(company_id: str, current_user: dict = Depends(get_current_user)):
+    """Research a company to get current information for better tweets"""
+    try:
+        # Get company info
+        company = await db.companies.find_one({
+            "id": company_id,
+            "user_id": current_user["id"],
+            "is_active": True
+        })
+        
+        if not company:
+            raise HTTPException(status_code=404, detail="Company not found")
+        
+        # Research the company
+        research_info = await research_company_info(
+            company["company_name"],
+            company["twitter_handle"]
+        )
+        
+        # Store research results for future use
+        await db.company_research.update_one(
+            {"company_id": company_id},
+            {
+                "$set": {
+                    "company_id": company_id,
+                    "research_data": research_info,
+                    "updated_at": datetime.utcnow()
+                }
+            },
+            upsert=True
+        )
+        
+        return {
+            "company": {
+                "name": company["company_name"],
+                "handle": company["twitter_handle"]
+            },
+            "research": research_info,
+            "message": "Company research completed - tweets will be more accurate and current"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in company research endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail="Research failed")
+
 @api_router.get("/uniqueness/demo")
 async def uniqueness_demo():
-    """Demonstrate the uniqueness system without authentication"""
+    """Demonstrate the uniqueness system with real company research"""
     try:
-        # Generate 3 different tweets for a demo company
+        # Research Ethereum for better context
+        research_info = await research_company_info("Ethereum", "@ethereum")
+        
+        # Generate 3 different tweets using research
         demo_tweets = []
         
         for i in range(3):
@@ -826,20 +875,23 @@ async def uniqueness_demo():
             })
         
         return {
-            "message": "Uniqueness System Demo - Each tweet is completely different",
+            "message": "Enhanced Uniqueness System - Research-powered tweets",
             "company": "Ethereum",
-            "handle": "@ethereum", 
+            "handle": "@ethereum",
+            "research_used": research_info,
             "unique_tweets": demo_tweets,
             "features": [
                 "✅ 100% unique content - no repeats even with 1000+ users",
                 "✅ AI detection resistant - natural human language", 
+                "✅ Real-time company research for accuracy",
+                "✅ Current events and developments included",
                 "✅ Multiple writing styles and personalities",
                 "✅ Crypto slang and informal language",
                 "✅ Random human imperfections"
             ]
         }
     except Exception as e:
-        return {"error": str(e), "message": "Demo endpoint for uniqueness system"}
+        return {"error": str(e), "message": "Demo endpoint for enhanced uniqueness system"}
 
 # Payment Routes
 @api_router.get("/payments/packages")
