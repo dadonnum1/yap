@@ -56,7 +56,8 @@ class BackendTester:
                 if response.status == 200:
                     data = await response.json()
                     self.log_result("User Registration", True, "Test user registered successfully", {"user_id": data.get("id")})
-                    return True
+                    # After successful registration, login to get token
+                    return await self.login_test_user()
                 elif response.status == 400:
                     # User might already exist, try to login
                     return await self.login_test_user()
