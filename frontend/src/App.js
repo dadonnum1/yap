@@ -907,9 +907,9 @@ const Dashboard = () => {
               <Card>
                 <CardContent className="p-8 text-center">
                   <Hash className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Tweets Generated</h3>
+                  <h3 className="text-lg font-semibold mb-2">Your AI-Generated Crypto Tweets Will Appear Here</h3>
                   <p className="text-muted-foreground mb-4">
-                    Generate tweets to see them here
+                    Generate authentic, human-like tweets about blockchain projects that consistently pass AI detection tests and maximize your airdrop participation
                   </p>
                   <Button 
                     onClick={generateDailyTweets} 
