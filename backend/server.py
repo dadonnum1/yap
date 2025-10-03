@@ -576,7 +576,7 @@ async def generate_daily_tweets(current_user: dict = Depends(get_current_user)):
     all_tweets = []
     
     for company in companies:
-        # Generate 1 tweet per company daily
+        # Generate unique tweet per company daily
         content = await generate_tweet_content(
             company["company_name"],
             company["twitter_handle"],
@@ -585,13 +585,12 @@ async def generate_daily_tweets(current_user: dict = Depends(get_current_user)):
         
         content_hash = hash_content(content)
         
-        # Check if this exact tweet was already generated today
+        # Check if user already has a tweet for this company today
         today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         existing_tweet = await db.tweets.find_one({
             "user_id": current_user["id"],
             "company_id": company["id"],
-            "generated_at": {"$gte": today},
-            "content_hash": content_hash
+            "generated_at": {"$gte": today}
         })
         
         if not existing_tweet:
