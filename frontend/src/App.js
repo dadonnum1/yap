@@ -1270,10 +1270,7 @@ function App() {
     return <PaymentSuccess />;
   }
 
-  // Check if URL has admin path
-  if (window.location.pathname.includes('/admin') || showAdmin) {
-    return <AdminLogin />;
-  }
+  // Removed separate admin login - using main system with admin@yapping.com
 
   return (
     <div className="App">
