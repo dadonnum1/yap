@@ -167,6 +167,18 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Custom Tweet Clone Style Feature"
+    implemented: true
+    working: false
+    file: "backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Simplified clone feature to just be a rewrite of original tweet. Removed complex style analysis. Changed function signature and simplified LLM prompt. Ready for testing."
+
 agent_communication:
     - agent: "main"
-      message: "✅ SEO OPTIMIZATION COMPLETE: All domain references updated to aiyappr.com, react-helmet-async fully integrated with dynamic meta tags, verified working correctly via browser testing. Page title shows correctly: 'Yapping - AI Tweet Generator for Crypto Airdrops | Undetectable by AI Detection'. Ready to proceed with pending admin dashboard and payment flow fixes."
+      message: "✅ SEO OPTIMIZATION COMPLETE: All domain references updated to aiyappr.com, react-helmet-async fully integrated with dynamic meta tags, verified working correctly via browser testing. Page title shows correctly: 'Yapping - AI Tweet Generator for Crypto Airdrops | Undetectable by AI Detection'. 🔧 FIXED CLONE FEATURE: Simplified custom tweet clone to be just a simple rewrite of the example tweet. Removed complex style analysis that was causing TypeError. Ready for backend testing."
