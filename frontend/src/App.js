@@ -690,6 +690,45 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Admin Stats (if admin user) */}
+        {isAdmin && adminStats && (
+          <>
+            <Card className="mb-6 border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <User className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-medium text-red-800">Admin System Overview</p>
+                    <p className="text-sm text-red-700">Platform-wide statistics and management</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-red-600">{adminStats.total_users}</div>
+                    <div className="text-xs text-red-700">Total Users</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-red-600">{adminStats.total_companies}</div>
+                    <div className="text-xs text-red-700">All Companies</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-red-600">{adminStats.total_tweets}</div>
+                    <div className="text-xs text-red-700">All Tweets</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-red-600">{adminStats.active_users}</div>
+                    <div className="text-xs text-red-700">Active Users</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-red-600">{adminStats.tweets_today}</div>
+                    <div className="text-xs text-red-700">Today's Tweets</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
