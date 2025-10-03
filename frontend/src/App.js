@@ -581,6 +581,190 @@ const Dashboard = () => {
   );
 };
 
+// Pricing Component
+const PricingModal = ({ open, onClose }) => {
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { token } = useAuth();
+
+  useEffect(() => {
+    if (open) {
+      loadPackages();
+    }
+  }, [open]);
+
+  const loadPackages = async () => {
+    try {
+      const response = await axios.get(`${API}/payments/packages`);
+      setPackages(response.data.packages);
+    } catch (error) {
+      toast.error('Failed to load packages');
+    }
+  };
+
+  const handlePurchase = async (packageId) => {
+    if (!token) {
+      toast.error('Please login first');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/payments/checkout/session`, {
+        package_id: packageId,
+        origin_url: window.location.origin
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Redirect to Stripe checkout
+      window.location.href = response.data.url;
+    } catch (error) {
+      toast.error('Failed to start checkout');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Choose Your Plan
+          </DialogTitle>
+          <CardDescription>
+            All plans include AI-undetectable tweets that pass detection tests
+          </CardDescription>
+        </DialogHeader>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          {packages.map((pkg) => (
+            <Card key={pkg.package_id} className="relative">
+              {pkg.package_id === 'pro' && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-blue-600">Most Popular</Badge>
+                </div>
+              )}
+              <CardContent className="p-6">
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold">{pkg.name}</h3>
+                  <div className="text-3xl font-bold text-blue-600 mt-2">
+                    ${pkg.amount}
+                    <span className="text-sm text-muted-foreground">/month</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">{pkg.description}</p>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  {pkg.features.map((feature, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button 
+                  className="w-full" 
+                  onClick={() => handlePurchase(pkg.package_id)}
+                  disabled={loading}
+                  data-testid={`purchase-${pkg.package_id}`}
+                >
+                  {loading ? 'Processing...' : 'Get Started'}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-6 p-4 bg-green-50 rounded-lg">
+          <div className="flex items-start gap-3">
+            <Shield className="h-5 w-5 text-green-600 mt-0.5" />
+            <div>
+              <div className="font-medium text-green-800">AI Detection Guarantee</div>
+              <div className="text-sm text-green-700 mt-1">
+                Our advanced system generates completely unique, human-like tweets that consistently pass AI detection tests. 
+                Each tweet uses natural crypto slang, human imperfections, and varied writing styles.
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Payment Success Component
+const PaymentSuccess = () => {
+  const [status, setStatus] = useState('checking');
+  const { token } = useAuth();
+
+  useEffect(() => {
+    const sessionId = new URLSearchParams(window.location.search).get('session_id');
+    if (sessionId && token) {
+      checkPaymentStatus(sessionId);
+    }
+  }, [token]);
+
+  const checkPaymentStatus = async (sessionId) => {
+    try {
+      const response = await axios.get(`${API}/payments/checkout/status/${sessionId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.payment_status === 'paid') {
+        setStatus('success');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 3000);
+      } else {
+        setStatus('pending');
+        // Continue checking
+        setTimeout(() => checkPaymentStatus(sessionId), 2000);
+      }
+    } catch (error) {
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md">
+        <CardContent className="p-8 text-center">
+          {status === 'checking' && (
+            <>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <h2 className="text-xl font-bold mb-2">Processing Payment</h2>
+              <p className="text-muted-foreground">Please wait while we confirm your payment...</p>
+            </>
+          )}
+          
+          {status === 'success' && (
+            <>
+              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold mb-2 text-green-800">Payment Successful!</h2>
+              <p className="text-muted-foreground">Your credits have been added. Redirecting to dashboard...</p>
+            </>
+          )}
+
+          {status === 'error' && (
+            <>
+              <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-red-600">✕</span>
+              </div>
+              <h2 className="text-xl font-bold mb-2 text-red-800">Payment Failed</h2>
+              <Button onClick={() => window.location.href = '/'}>
+                Return to Dashboard
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 // Simple Admin Panel - will add back after fixing compilation
 const AdminLogin = () => {
   return (
