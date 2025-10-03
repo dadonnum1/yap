@@ -196,6 +196,42 @@ async def get_current_user(token: HTTPAuthorizationCredentials = Depends(bearer)
     
     return user
 
+async def get_current_admin(token: HTTPAuthorizationCredentials = Depends(bearer)) -> dict:
+    """Dependency to get current admin from JWT token"""
+    try:
+        payload = jwt.decode(token.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        admin_id: str = payload.get("sub")
+        is_admin: bool = payload.get("is_admin", False)
+        
+        if admin_id is None or not is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Admin access required"
+            )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
+    
+    # Query admin from database
+    admin = await db.admins.find_one({"id": admin_id, "is_active": True})
+    if admin is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Admin access required"
+        )
+    
+    return admin
+
+def create_admin_token(admin_id: str):
+    """Create JWT token with admin privileges"""
+    to_encode = {"sub": admin_id, "is_admin": True}
+    expire = datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return encoded_jwt
+
 async def generate_tweet_content(company_name: str, twitter_handle: str, description: str = "") -> str:
     """Generate positive tweet content about a company using LLM"""
     try:
