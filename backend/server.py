@@ -456,15 +456,7 @@ async def mark_tweet_copied(tweet_id: str, current_user: dict = Depends(get_curr
 async def root():
     return {"message": "Yapping API is running! Ready to generate tweets for airdrop hunting! 🚀"}
 
-# Debug endpoint
-@api_router.get("/debug/auth")
-async def debug_auth(current_user: dict = Depends(get_current_user)):
-    return {"user": current_user, "message": "Authentication working!"}
-
-# Debug endpoint without auth
-@api_router.get("/debug/no-auth")
-async def debug_no_auth():
-    return {"message": "No auth endpoint working!"}
+# Debug endpoints removed
 
 # Include router
 app.include_router(api_router)
