@@ -882,6 +882,35 @@ async def setup_admin():
     
     return {"message": "Admin created successfully", "username": "admin", "password": "admin123"}
 
+@api_router.post("/test/uniqueness/{company_id}")
+async def test_tweet_uniqueness(company_id: str, count: int = 5, current_user: dict = Depends(get_current_user)):
+    """Test endpoint to generate multiple unique tweets for the same company"""
+    company = await db.companies.find_one({"id": company_id, "is_active": True})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    generated_tweets = []
+    
+    for i in range(count):
+        content = await generate_tweet_content(
+            company["company_name"],
+            company["twitter_handle"],
+            company.get("description", "")
+        )
+        
+        generated_tweets.append({
+            "attempt": i + 1,
+            "content": content,
+            "length": len(content)
+        })
+    
+    return {
+        "company": company["company_name"],
+        "twitter_handle": company["twitter_handle"],
+        "generated_count": len(generated_tweets),
+        "tweets": generated_tweets
+    }
+
 # Debug endpoints removed
 
 # Include router
