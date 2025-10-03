@@ -124,17 +124,12 @@ def create_access_token(data: dict):
 def hash_content(content: str) -> str:
     return hashlib.md5(content.encode()).hexdigest()
 
-async def get_current_user(authorization: str = Header(None)) -> dict:
+bearer = HTTPBearer()
+
+async def get_current_user(token: HTTPAuthorizationCredentials = Depends(bearer)) -> dict:
     """Dependency to get current user from JWT token"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
-    
-    token = authorization.split(" ")[1]
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
             raise HTTPException(
