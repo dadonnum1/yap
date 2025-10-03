@@ -107,6 +107,50 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# Admin Models
+class Admin(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    username: str
+    password_hash: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = True
+
+class AdminLogin(BaseModel):
+    username: str
+    password: str
+
+class AdminResponse(BaseModel):
+    id: str
+    username: str
+    created_at: datetime
+    is_active: bool
+
+class SystemStats(BaseModel):
+    total_users: int
+    total_companies: int
+    total_tweets: int
+    active_users: int
+    tweets_today: int
+
+class UserWithStats(BaseModel):
+    id: str
+    email: str
+    created_at: datetime
+    is_active: bool
+    company_count: int
+    tweet_count: int
+    last_tweet: Optional[datetime] = None
+
+class CompanyWithUser(BaseModel):
+    id: str
+    twitter_handle: str
+    company_name: str
+    description: Optional[str]
+    created_at: datetime
+    is_active: bool
+    user_email: str
+    tweet_count: int
+
 # Utility functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
