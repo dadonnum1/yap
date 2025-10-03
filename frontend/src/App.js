@@ -655,6 +655,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>{isAdmin ? 'Admin Dashboard - Yapping' : `Dashboard - Yapping | ${user?.email}`}</title>
+        <meta name="description" content={isAdmin ? "Admin dashboard for Yapping - manage users, tweets, and system statistics" : "Your personal Yapping dashboard - manage companies, generate tweets, and view AI-undetectable content"} />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
