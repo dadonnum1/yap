@@ -736,7 +736,9 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Tweet Credits</p>
-                  <p className="text-3xl font-bold text-blue-600" data-testid="credits-count">{credits.balance}</p>
+                  <p className="text-3xl font-bold text-blue-600" data-testid="credits-count">
+                    {isAdmin ? "∞" : credits.balance}
+                  </p>
                 </div>
                 <CreditCard className="h-8 w-8 text-blue-500" />
               </div>
