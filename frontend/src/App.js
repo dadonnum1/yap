@@ -633,10 +633,10 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-950 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <Card className=\"w-full max-w-md\">
-        <CardHeader className=\"text-center\">
-          <CardTitle className=\"text-2xl font-bold flex items-center justify-center gap-2\">
-            <User className=\"h-8 w-8 text-red-500\" />
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
+            <User className="h-8 w-8 text-red-500" />
             Admin Panel
           </CardTitle>
           <CardDescription>
@@ -644,36 +644,36 @@ const AdminLogin = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAdminLogin} className=\"space-y-4\">
-            <div className=\"space-y-2\">
-              <Label htmlFor=\"username\">Username</Label>
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
               <Input
-                id=\"username\"
+                id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder=\"Enter admin username\"
+                placeholder="Enter admin username"
                 required
-                data-testid=\"admin-username-input\"
+                data-testid="admin-username-input"
               />
             </div>
-            <div className=\"space-y-2\">
-              <Label htmlFor=\"password\">Password</Label>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <Input
-                id=\"password\"
-                type=\"password\"
+                id="password"
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder=\"Enter admin password\"
+                placeholder="Enter admin password"
                 required
-                data-testid=\"admin-password-input\"
+                data-testid="admin-password-input"
               />
             </div>
-            <Button type=\"submit\" className=\"w-full\" disabled={loading} data-testid=\"admin-login-button\">
+            <Button type="submit" className="w-full" disabled={loading} data-testid="admin-login-button">
               {loading ? 'Logging in...' : 'Admin Login'}
             </Button>
           </form>
-          <div className=\"mt-4 text-center\">
-            <Button variant=\"link\" onClick={() => window.location.href = '/'}>
+          <div className="mt-4 text-center">
+            <Button variant="link" onClick={() => window.location.href = '/'}>
               ← Back to User Login
             </Button>
           </div>
