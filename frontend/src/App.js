@@ -551,6 +551,8 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('companies');
   const [showPricing, setShowPricing] = useState(false);
   const [showCustomTweet, setShowCustomTweet] = useState(false);
+  const [adminStats, setAdminStats] = useState(null);
+  const isAdmin = user?.email === 'admin@yapping.com';
 
   useEffect(() => {
     loadData();
