@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://yapping.ai/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1
