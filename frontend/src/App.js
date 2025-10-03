@@ -632,9 +632,9 @@ function App() {
   }
 
   return (
-    <div className=\"App\">
+    <div className="App">
       {user ? <Dashboard /> : <AuthForm />}
-      <Toaster position=\"top-right\" />
+      <Toaster position="top-right" />
     </div>
   );
 }
