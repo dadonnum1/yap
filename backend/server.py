@@ -124,27 +124,36 @@ def create_access_token(data: dict):
 def hash_content(content: str) -> str:
     return hashlib.md5(content.encode()).hexdigest()
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())) -> dict:
-    try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+def get_current_user_dependency():
+    """Dependency to get current user from JWT token"""
+    def get_current_user(authorization: str = Header(None)) -> dict:
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
+            )
+        
+        token = authorization.split(" ")[1]
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            user_id: str = payload.get("sub")
+            if user_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Could not validate credentials"
+                )
+        except JWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials"
             )
-        user = await db.users.find_one({"id": user_id, "is_active": True})
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials"
-            )
-        return user
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials"
-        )
+        
+        return {"user_id": user_id}
+    
+    return get_current_user
+
+# Create the dependency function
+get_current_user = get_current_user_dependency()
 
 async def generate_tweet_content(company_name: str, twitter_handle: str, description: str = "") -> str:
     """Generate positive tweet content about a company using LLM"""
