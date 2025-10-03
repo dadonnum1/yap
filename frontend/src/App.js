@@ -541,6 +541,7 @@ const Dashboard = () => {
   const [generating, setGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('companies');
   const [showPricing, setShowPricing] = useState(false);
+  const [showCustomTweet, setShowCustomTweet] = useState(false);
 
   useEffect(() => {
     loadData();
