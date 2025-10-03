@@ -859,6 +859,12 @@ const Dashboard = () => {
       </div>
       
       <PricingModal open={showPricing} onClose={() => setShowPricing(false)} />
+      <CustomTweetDialog 
+        open={showCustomTweet} 
+        onClose={() => setShowCustomTweet(false)}
+        companies={companies}
+        onTweetGenerated={loadData}
+      />
     </div>
   );
 };
