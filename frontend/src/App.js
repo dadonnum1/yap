@@ -659,7 +659,7 @@ const Dashboard = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Twitter className="h-8 w-8 text-blue-500" />
-            <h1 className="text-2xl font-bold text-gray-900">Yapping Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Yapping - AI Tweet Generator Dashboard</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-600">
