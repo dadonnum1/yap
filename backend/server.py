@@ -107,6 +107,22 @@ class TweetGenerate(BaseModel):
     company_id: str
     count: Optional[int] = 1
 
+class CustomTweetRequest(BaseModel):
+    company_id: str
+    custom_idea: Optional[str] = None
+    example_tweet: Optional[str] = None
+    generation_type: str  # "idea" or "style_clone"
+
+class CustomTweetResponse(BaseModel):
+    id: str
+    company_id: str
+    content: str
+    generation_type: str
+    source_input: str
+    generated_at: datetime
+    company_name: str
+    twitter_handle: str
+
 class Token(BaseModel):
     access_token: str
     token_type: str
