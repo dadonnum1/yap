@@ -1135,14 +1135,17 @@ async def generate_custom_tweet(request: CustomTweetRequest, current_user: dict 
         logging.error(f"Error generating custom tweet: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to generate custom tweet")
 
+class AnalyzeStyleRequest(BaseModel):
+    example_tweet: str
+
 @api_router.post("/tweets/analyze-style")
-async def analyze_tweet_style_endpoint(example_tweet: str = "", current_user: dict = Depends(get_current_user)):
+async def analyze_tweet_style_endpoint(request: AnalyzeStyleRequest, current_user: dict = Depends(get_current_user)):
     """Analyze the style of an example tweet (preview before generation)"""
-    if not example_tweet.strip():
+    if not request.example_tweet.strip():
         raise HTTPException(status_code=400, detail="Example tweet is required")
     
     try:
-        analysis = await analyze_tweet_style(example_tweet.strip())
+        analysis = await analyze_tweet_style(request.example_tweet.strip())
         return {
             "analysis": analysis,
             "message": "Style analysis complete - use this for style cloning"
