@@ -810,7 +810,7 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {credits.balance === 0 && (
+        {credits.balance === 0 && !isAdmin && (
           <Card className="mb-6 border-orange-200 bg-orange-50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
