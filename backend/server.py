@@ -344,8 +344,58 @@ async def check_tweet_uniqueness(new_tweet: str, company_id: str, min_similarity
     
     return True
 
+async def research_company_info(company_name: str, twitter_handle: str) -> dict:
+    """Research current information about a company/project"""
+    try:
+        # Use web search to get current information
+        from emergentintegrations.tools.websearch import WebSearch
+        
+        web_search = WebSearch()
+        
+        # Search for recent news and information
+        search_query = f"{company_name} {twitter_handle} crypto blockchain latest news updates 2024 2025"
+        
+        search_results = await web_search.search(query=search_query, max_results=3)
+        
+        # Extract relevant information
+        company_info = {
+            "recent_news": [],
+            "key_features": [],
+            "current_status": "active",
+            "latest_updates": [],
+            "community_sentiment": "positive"
+        }
+        
+        # Parse search results for useful information
+        for result in search_results.get("results", []):
+            title = result.get("title", "")
+            snippet = result.get("snippet", "")
+            
+            # Extract key information
+            if any(keyword in title.lower() or keyword in snippet.lower() for keyword in ["launch", "update", "release", "partnership", "integration"]):
+                company_info["recent_news"].append(f"{title}: {snippet[:100]}...")
+            
+            if any(keyword in snippet.lower() for keyword in ["defi", "nft", "dao", "staking", "yield", "dex", "bridge"]):
+                company_info["key_features"].append(snippet[:80] + "...")
+        
+        return company_info
+        
+    except Exception as e:
+        logging.error(f"Error researching company info: {str(e)}")
+        # Return default info if research fails
+        return {
+            "recent_news": ["Active in the crypto ecosystem"],
+            "key_features": ["Blockchain technology", "Community-driven"],
+            "current_status": "active",
+            "latest_updates": ["Continuing development"],
+            "community_sentiment": "positive"
+        }
+
 async def generate_human_like_tweet(company_name: str, twitter_handle: str, description: str = "", attempt: int = 1) -> str:
     """Generate human-like tweet that passes AI detection"""
+    
+    # Research current company information
+    company_info = await research_company_info(company_name, twitter_handle)
     
     # Different writing styles for variety
     styles = [
