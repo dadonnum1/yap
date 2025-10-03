@@ -845,9 +845,9 @@ const Dashboard = () => {
               <Card>
                 <CardContent className="p-8 text-center">
                   <Twitter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Companies Added</h3>
+                  <h3 className="text-lg font-semibold mb-2">Start Generating AI-Undetectable Crypto Tweets</h3>
                   <p className="text-muted-foreground mb-4">
-                    Add companies to start generating tweets for airdrop hunting
+                    Add blockchain projects and DeFi protocols to generate authentic, research-powered tweets that pass AI detection tests and boost your airdrop rewards
                   </p>
                   <AddCompanyDialog onCompanyAdded={loadData} />
                 </CardContent>
