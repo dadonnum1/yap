@@ -560,14 +560,26 @@ const Dashboard = () => {
 
   const loadData = async () => {
     try {
-      const [companiesRes, tweetsRes, creditsRes] = await Promise.all([
+      const requests = [
         axios.get(`${API}/companies`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/tweets`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/user/credits`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      setCompanies(companiesRes.data);
-      setTweets(tweetsRes.data);
-      setCredits(creditsRes.data);
+      ];
+
+      // If admin, also load admin stats
+      if (isAdmin) {
+        requests.push(axios.get(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }));
+      }
+
+      const responses = await Promise.all(requests);
+      
+      setCompanies(responses[0].data);
+      setTweets(responses[1].data);
+      setCredits(responses[2].data);
+      
+      if (isAdmin && responses[3]) {
+        setAdminStats(responses[3].data);
+      }
     } catch (error) {
       toast.error('Failed to load data');
     } finally {
