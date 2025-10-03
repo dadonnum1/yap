@@ -35,8 +35,7 @@ EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 app = FastAPI(title="Yapping API", description="API for generating tweets about crypto projects")
 api_router = APIRouter(prefix="/api")
 
-# Security
-security = HTTPBearer()
+# Security will be instantiated per request
 
 # Models
 class User(BaseModel):
