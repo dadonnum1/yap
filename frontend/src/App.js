@@ -500,6 +500,15 @@ const TweetCard = ({ tweet, onCopy }) => {
               {tweet.twitter_handle}
             </Badge>
             <span className="text-sm text-muted-foreground">{tweet.company_name}</span>
+            {tweet.generation_type && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {tweet.generation_type === 'idea' ? (
+                  <><Lightbulb className="h-3 w-3" />Custom Idea</>
+                ) : (
+                  <><Copy className="h-3 w-3" />Style Clone</>
+                )}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3" />
