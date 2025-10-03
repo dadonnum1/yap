@@ -120,11 +120,17 @@ const AuthForm = () => {
             Yapping
           </CardTitle>
           <CardDescription>
-            Generate AI-undetectable tweets for crypto airdrops
+            AI Tweet Generator for Crypto Airdrops | Undetectable by AI Systems
           </CardDescription>
-          <div className="mt-4 flex items-center justify-center gap-2 text-sm bg-green-50 text-green-700 px-3 py-2 rounded-lg">
-            <Shield className="h-4 w-4" />
-            ✅ Passes AI Detection Tests
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-center gap-2 text-sm bg-green-50 text-green-700 px-3 py-2 rounded-lg">
+              <Shield className="h-4 w-4" />
+              ✅ Passes All AI Detection Tests
+            </div>
+            <div className="flex items-center justify-center gap-2 text-sm bg-blue-50 text-blue-700 px-3 py-2 rounded-lg">
+              <Twitter className="h-4 w-4" />
+              🚀 Earn More Airdrop Rewards
+            </div>
           </div>
         </CardHeader>
         <CardContent>
