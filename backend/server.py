@@ -785,6 +785,249 @@ async def uniqueness_demo():
     except Exception as e:
         return {"error": str(e), "message": "Demo endpoint for uniqueness system"}
 
+# Payment Routes
+@api_router.get("/payments/packages")
+async def get_payment_packages():
+    """Get available payment packages"""
+    return {"packages": [package.dict() for package in PAYMENT_PACKAGES.values()]}
+
+@api_router.post("/payments/checkout/session", response_model=CheckoutSessionResponse)
+async def create_checkout_session(request: CreateCheckoutRequest, current_user: dict = Depends(get_current_user)):
+    """Create Stripe checkout session"""
+    # Validate package exists
+    if request.package_id not in PAYMENT_PACKAGES:
+        raise HTTPException(status_code=400, detail="Invalid package selected")
+    
+    package = PAYMENT_PACKAGES[request.package_id]
+    
+    try:
+        # Initialize Stripe checkout
+        webhook_url = f"{request.origin_url}/api/webhook/stripe"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        # Create success and cancel URLs
+        success_url = f"{request.origin_url}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{request.origin_url}/payment/cancel"
+        
+        # Create checkout session request
+        checkout_request = CheckoutSessionRequest(
+            amount=package.amount,
+            currency=package.currency,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "package_id": request.package_id,
+                "user_id": current_user["id"],
+                "user_email": current_user["email"],
+                "tweet_credits": str(package.tweet_credits)
+            }
+        )
+        
+        # Create checkout session with Stripe
+        session = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Create payment transaction record
+        transaction = PaymentTransaction(
+            user_id=current_user["id"],
+            session_id=session.session_id,
+            package_id=request.package_id,
+            amount=package.amount,
+            currency=package.currency,
+            payment_status="pending",
+            status="initiated",
+            metadata={
+                "package_name": package.name,
+                "tweet_credits": package.tweet_credits,
+                "user_email": current_user["email"]
+            }
+        )
+        
+        await db.payment_transactions.insert_one(transaction.dict())
+        
+        return session
+        
+    except Exception as e:
+        logging.error(f"Error creating checkout session: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create checkout session")
+
+@api_router.get("/payments/checkout/status/{session_id}", response_model=PaymentStatusResponse)
+async def get_payment_status(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Get payment status and process completion"""
+    try:
+        # Find transaction record
+        transaction = await db.payment_transactions.find_one({
+            "session_id": session_id,
+            "user_id": current_user["id"]
+        })
+        
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Payment session not found")
+        
+        # If already processed, return cached status
+        if transaction.get("payment_status") == "paid" and transaction.get("status") == "completed":
+            package = PAYMENT_PACKAGES.get(transaction["package_id"])
+            return PaymentStatusResponse(
+                session_id=session_id,
+                status=transaction["status"],
+                payment_status=transaction["payment_status"], 
+                amount=transaction["amount"],
+                currency=transaction["currency"],
+                package_info=package.dict() if package else None
+            )
+        
+        # Check with Stripe
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        checkout_status = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Update transaction record
+        update_data = {
+            "payment_status": checkout_status.payment_status,
+            "status": checkout_status.status,
+            "updated_at": datetime.utcnow()
+        }
+        
+        # If payment successful and not already processed
+        if (checkout_status.payment_status == "paid" and 
+            checkout_status.status == "complete" and 
+            transaction.get("payment_status") != "paid"):
+            
+            # Add credits to user account
+            package = PAYMENT_PACKAGES[transaction["package_id"]]
+            await add_user_credits(current_user["id"], package.tweet_credits, session_id)
+            update_data["status"] = "completed"
+        
+        # Update transaction
+        await db.payment_transactions.update_one(
+            {"session_id": session_id, "user_id": current_user["id"]},
+            {"$set": update_data}
+        )
+        
+        package = PAYMENT_PACKAGES.get(transaction["package_id"])
+        return PaymentStatusResponse(
+            session_id=session_id,
+            status=update_data["status"],
+            payment_status=update_data["payment_status"],
+            amount=transaction["amount"], 
+            currency=transaction["currency"],
+            package_info=package.dict() if package else None
+        )
+        
+    except Exception as e:
+        logging.error(f"Error checking payment status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to check payment status")
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    try:
+        body = await request.body()
+        stripe_signature = request.headers.get("stripe-signature")
+        
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+        webhook_response = await stripe_checkout.handle_webhook(body, stripe_signature)
+        
+        # Process webhook event
+        if webhook_response.event_type == "checkout.session.completed":
+            await process_successful_payment(webhook_response.session_id, webhook_response.metadata)
+        
+        return {"status": "success"}
+        
+    except Exception as e:
+        logging.error(f"Webhook error: {str(e)}")
+        raise HTTPException(status_code=400, detail="Webhook processing failed")
+
+async def add_user_credits(user_id: str, credits: int, session_id: str):
+    """Add credits to user account (prevent duplicate processing)"""
+    try:
+        # Check if credits already added for this session
+        existing_credit = await db.user_credits.find_one({
+            "user_id": user_id,
+            "session_id": session_id
+        })
+        
+        if existing_credit:
+            return  # Already processed
+        
+        # Get current user credits or create new record
+        user_credits = await db.user_credits.find_one({"user_id": user_id})
+        
+        if user_credits:
+            # Update existing credits
+            new_balance = user_credits.get("balance", 0) + credits
+            await db.user_credits.update_one(
+                {"user_id": user_id},
+                {
+                    "$set": {"balance": new_balance, "updated_at": datetime.utcnow()},
+                    "$push": {"transactions": {
+                        "session_id": session_id,
+                        "credits": credits,
+                        "type": "purchase",
+                        "timestamp": datetime.utcnow()
+                    }}
+                }
+            )
+        else:
+            # Create new credits record
+            await db.user_credits.insert_one({
+                "user_id": user_id,
+                "balance": credits,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "transactions": [{
+                    "session_id": session_id,
+                    "credits": credits,
+                    "type": "purchase", 
+                    "timestamp": datetime.utcnow()
+                }]
+            })
+            
+        logging.info(f"Added {credits} credits to user {user_id}")
+        
+    except Exception as e:
+        logging.error(f"Error adding user credits: {str(e)}")
+
+async def process_successful_payment(session_id: str, metadata: dict):
+    """Process successful payment from webhook"""
+    try:
+        user_id = metadata.get("user_id")
+        package_id = metadata.get("package_id")
+        
+        if not user_id or not package_id:
+            return
+            
+        package = PAYMENT_PACKAGES.get(package_id)
+        if not package:
+            return
+            
+        # Add credits
+        await add_user_credits(user_id, package.tweet_credits, session_id)
+        
+        # Update transaction status
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {
+                "status": "completed",
+                "payment_status": "paid", 
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+    except Exception as e:
+        logging.error(f"Error processing successful payment: {str(e)}")
+
+@api_router.get("/user/credits")
+async def get_user_credits(current_user: dict = Depends(get_current_user)):
+    """Get user's current credit balance"""
+    user_credits = await db.user_credits.find_one({"user_id": current_user["id"]})
+    
+    if not user_credits:
+        return {"balance": 0, "transactions": []}
+        
+    return {
+        "balance": user_credits.get("balance", 0),
+        "transactions": user_credits.get("transactions", [])[-10:]  # Last 10 transactions
+    }
+
 # Admin Routes
 @api_router.post("/admin/login", response_model=Token)
 async def admin_login(admin_data: AdminLogin):
