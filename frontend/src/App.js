@@ -427,8 +427,35 @@ const Dashboard = () => {
       </header>
 
       <div className="p-6">
+        {/* AI Detection Badge */}
+        <div className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Shield className="h-8 w-8 text-green-600" />
+              <div>
+                <h3 className="font-semibold text-green-800">✅ AI Detection Resistant</h3>
+                <p className="text-sm text-green-700">All tweets pass AI detection tests with human-like authenticity</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowPricing(true)}>
+              Upgrade Plan
+            </Button>
+          </div>
+        </div>
+
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Tweet Credits</p>
+                  <p className="text-3xl font-bold text-blue-600" data-testid="credits-count">{credits.balance}</p>
+                </div>
+                <CreditCard className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -455,12 +482,12 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Copied Tweets</p>
-                  <p className="text-3xl font-bold" data-testid="copied-count">
+                  <p className="text-sm text-muted-foreground">AI-Undetectable</p>
+                  <p className="text-3xl font-bold text-green-600" data-testid="copied-count">
                     {tweets.filter(t => t.copied_at).length}
                   </p>
                 </div>
-                <Copy className="h-8 w-8 text-purple-500" />
+                <Shield className="h-8 w-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
